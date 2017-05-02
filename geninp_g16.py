@@ -19,10 +19,23 @@ parser.add_argument('-p', dest = 'input', help = 'Pre-processed PDB file for onl
 parser.add_argument('-n', dest = 'nprocshared', help = 'Number of CPU cores in the calculation', type = str)
 parser.add_argument('-m', dest = 'memory', help = 'Memory required for the calculation, unit in GB', type = str)
 parser.add_argument('-o', dest = 'output', help = 'Output name, input name as default', type = str)
+#add further specific commend for analyzing
+parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data', type = str)
+
+######################################################
+###############                        ###############
+###############   PARAMETER SETTINGS   ###############
+###############                        ###############
+######################################################
+
+# CAinclude: not use H to replace CA, use H to replace C and N bonded with CA instead
+# AddH: add hydrogen to neutralize HEME carboxylic acid group
 
 #parsing input
 options = vars(parser.parse_args())
 
+#get specific feature
+specific_feature = map(lambda x:x.lower(),options['specific'])
 #options validation
 # -p argument
 if options['input'] == None:
@@ -74,41 +87,218 @@ fo_zindo = open(name+'_zindo.com', 'w')
 #c 39-46 y coordinate
 #c 47-54 z coordinate
 #c 77-78 element
+
+######################################################
+###############                        ###############
+###############     INPUT PARSING      ###############
+###############                        ###############
+######################################################
+
+#define coord list to store all new lines for input in g16 .com file
 coord = []
-#we mannually add hydrogen to replace the alpha-C, with specific C-H distance
+#we mannually add hydrogen to replace the alpha-C as the default feature, with specific C-H distance
 #pre-defined C-H bond distance = 1.09 A
 C_H_bond= 1.09
-#since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
-for i in range(1,len(lines)-1):
-    line = lines[i]
-    if 'CA' in line:
-        x_ca = float(line[30:38].strip())
-        y_ca = float(line[38:46].strip())
-        z_ca = float(line[46:54].strip())
-        #get coord of beta-C
-        refline = lines[i+1]
-        x_ref = float(refline[30:38].strip())
-        y_ref = float(refline[38:46].strip())
-        z_ref = float(refline[46:54].strip())
-        #calculate the new coord
-        length = ((x_ca-x_ref)**2+(y_ca-y_ref)**2+(z_ca-z_ref)**2)**0.5
-        newx = x_ref + (x_ca - x_ref)*C_H_bond/length
-        newy = y_ref + (y_ca - y_ref)*C_H_bond/length
-        newz = z_ref + (z_ca - z_ref)*C_H_bond/length
-        #get the new line added
-        newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
-        coord.append(newline)
-    else:
-        element = line[76:78].strip()
-        x = float(line[30:38].strip())
-        y = float(line[38:46].strip())
-        z = float(line[46:54].strip())
+#we add hydrogen to neutralize COO-, with specific O-H distance
+O_H_bond= 0.98
 
-        newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
-        coord.append(newline)
+#case 1: replace CA and not addh
+if 'cainclude' not in specific_feature and 'addh' not in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    for i in range(1,len(lines)-1):
+        line = lines[i] 
+        if 'CA' == line[12:16].strip():
+            x_ca = float(line[30:38].strip())
+            y_ca = float(line[38:46].strip())
+            z_ca = float(line[46:54].strip())
+            #get coord of beta-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_ca-x_ref)**2+(y_ca-y_ref)**2+(z_ca-z_ref)**2)**0.5
+            newx = x_ref + (x_ca - x_ref)*C_H_bond/length
+            newy = y_ref + (y_ca - y_ref)*C_H_bond/length
+            newz = z_ref + (z_ca - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        else:
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+
+#case 2: replace CA and addh
+if 'cainclude' not in specific_feature and 'addh' in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    for i in range(1,len(lines)-1):
+        line = lines[i] 
+        if 'CA' == line[12:16].strip():
+            x_ca = float(line[30:38].strip())
+            y_ca = float(line[38:46].strip())
+            z_ca = float(line[46:54].strip())
+            #get coord of beta-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_ca-x_ref)**2+(y_ca-y_ref)**2+(z_ca-z_ref)**2)**0.5
+            newx = x_ref + (x_ca - x_ref)*C_H_bond/length
+            newy = y_ref + (y_ca - y_ref)*C_H_bond/length
+            newz = z_ref + (z_ca - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        elif 'O1A' == line[12:16].strip() or 'O1D' == line[12:16].strip():
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get coord of CG
+            refline = lines[i-2]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            CO_length = ((x-x_ref)**2+(y-y_ref)**2+(z-z_ref)**2)**0.5
+            newx = x + (x - x_ref)*O_H_bond/CO_length
+            newy = y + (y - y_ref)*O_H_bond/CO_length
+            newz = z + (z - z_ref)*O_H_bond/CO_length
+            #write two line 
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+            addline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(addline)
+        else:
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #write line
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+
+#case 3: replace N and C and not addh
+if 'cainclude' in specific_feature and 'addh' not in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    for i in range(1,len(lines)-1):
+        line = lines[i] 
+        if 'N' == line[12:16].strip():
+            x_n = float(line[30:38].strip())
+            y_n = float(line[38:46].strip())
+            z_n = float(line[46:54].strip())
+            #get coord of alpha-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_n-x_ref)**2+(y_n-y_ref)**2+(z_n-z_ref)**2)**0.5
+            newx = x_ref + (x_n - x_ref)*C_H_bond/length
+            newy = y_ref + (y_n - y_ref)*C_H_bond/length
+            newz = z_ref + (z_n - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        elif 'C' == line[12:16].strip():
+            x_c = float(line[30:38].strip())
+            y_c = float(line[38:46].strip())
+            z_c = float(line[46:54].strip())
+            #calculate the new coord
+            length = ((x_c-x_ref)**2+(y_c-y_ref)**2+(z_c-z_ref)**2)**0.5
+            newx = x_ref + (x_c - x_ref)*C_H_bond/length
+            newy = y_ref + (y_c - y_ref)*C_H_bond/length
+            newz = z_ref + (z_c - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        else:
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #write line
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+
+#case 4: replace N and C and addh
+if 'cainclude' in specific_feature and 'addh' in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    for i in range(1,len(lines)-1):
+        line = lines[i] 
+        if 'N' == line[12:16].strip():
+            x_n = float(line[30:38].strip())
+            y_n = float(line[38:46].strip())
+            z_n = float(line[46:54].strip())
+            #get coord of alpha-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_n-x_ref)**2+(y_n-y_ref)**2+(z_n-z_ref)**2)**0.5
+            newx = x_ref + (x_n - x_ref)*C_H_bond/length
+            newy = y_ref + (y_n - y_ref)*C_H_bond/length
+            newz = z_ref + (z_n - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        elif 'C' == line[12:16].strip():
+            x_c = float(line[30:38].strip())
+            y_c = float(line[38:46].strip())
+            z_c = float(line[46:54].strip())
+            #calculate the new coord
+            length = ((x_c-x_ref)**2+(y_c-y_ref)**2+(z_c-z_ref)**2)**0.5
+            newx = x_ref + (x_c - x_ref)*C_H_bond/length
+            newy = y_ref + (y_c - y_ref)*C_H_bond/length
+            newz = z_ref + (z_c - z_ref)*C_H_bond/length
+            #get the new line added
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(newline)
+        elif 'O1A' == line[12:16].strip() or 'O1D' == line[12:16].strip():
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get coord of CG
+            refline = lines[i-2]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            CO_length = ((x-x_ref)**2+(y-y_ref)**2+(z-z_ref)**2)**0.5
+            newx = x + (x - x_ref)*O_H_bond/CO_length
+            newy = y + (y - y_ref)*O_H_bond/CO_length
+            newz = z + (z - z_ref)*O_H_bond/CO_length
+            #write two line 
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+            addline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(addline)
+        else:
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #write line
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
 
 
-#OUTPUT STREAMING
+
+######################################################
+###############                        ###############
+###############    OUTPUT STREAMING    ###############
+###############                        ###############
+######################################################
+
+#right now we just use it for general single point calculation, not for further parameter setting
 #start writing g16 input files: dft version
 #write header
 fo_dft.write('%chk='+name+'_dft.chk\n')
@@ -117,7 +307,7 @@ fo_dft.write('%nprocshared='+nprocshared+'\n')
 fo_dft.write('%mem='+mem+'\n')
 #what to do in the calculation, default is single point 
 #inplement in this #p command will be develped further
-fo_dft.write('#p b3lyp/6-31g Pop=Full\n')
+fo_dft.write('#p b3lyp/cc-pVDZ Pop=Full\n')
 fo_dft.write('\n')
 fo_dft.write('dft calculation for '+name+'\n')
 fo_dft.write('\n')
