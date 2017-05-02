@@ -36,9 +36,12 @@ parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific featu
 #parsing input
 options = vars(parser.parse_args())
 
-#get specific feature
-specific_feature = map(lambda x:x.lower(),options['specific'])
 #options validation
+#get specific feature
+if options['specific'] == None:
+    specific_feature = []
+else:
+    specific_feature = map(lambda x:x.lower(),options['specific'])
 # -p argument
 if options['input'] == None:
     print 'No input detected, please try again'
