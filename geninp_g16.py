@@ -298,7 +298,7 @@ if 'nocap' in specific_feature:
     for i in range(1,len(lines)-1):
         line = lines[i]
         #parse one line
-        element line[76:78].strip()
+        element = line[76:78].strip()
         x = float(line[30:38].strip())
         y = float(line[38:46].strip())
         z = float(line[46:54].strip())
