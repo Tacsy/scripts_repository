@@ -28,8 +28,10 @@ parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific featu
 ###############                        ###############
 ######################################################
 
-# CAinclude: not use H to replace CA, use H to replace C and N bonded with CA instead
-# AddH: add hydrogen to neutralize HEME carboxylic acid group
+# cainclude: not use H to replace CA, use H to replace C and N bonded with CA instead
+# addh: add hydrogen to neutralize HEME carboxylic acid group
+# nocap: just use the default coordinates and do no changes to it (warning: this will discard all other features and 
+#        just do nocap) 
 
 #parsing input
 options = vars(parser.parse_args())
@@ -290,6 +292,19 @@ if 'cainclude' in specific_feature and 'addh' in specific_feature:
             newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
             coord.append(newline)
 
+#case 5: no cap
+if 'nocap' in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    for i in range(1,len(lines)-1):
+        line = lines[i]
+        #parse one line
+        element line[76:78].strip()
+        x = float(line[30:38].strip())
+        y = float(line[38:46].strip())
+        z = float(line[46:54].strip())
+        #write line
+        newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+        coord.append(newline)
 
 
 ######################################################
