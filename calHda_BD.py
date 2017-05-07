@@ -63,7 +63,7 @@ def build_matrix(filename):
             numlist.append(float(num))
 
     #get the length of the list and get the dimension
-    tria_num = len(fock_list)
+    tria_num = len(numlist)
     for i in range(int(sqrt(tria_num*2)),1,-1):
         if i*(i+1)/2.0 == tria_num:
             dim = i
