@@ -87,7 +87,7 @@ def build_matrix(filename):
     #build upper triangular matrix element
     for i in range(dim):
         for j in range(i+1,dim):
-            full_matrix[i.j] = np.conjugate(full_matrix[j,i])
+            full_matrix[i,j] = np.conjugate(full_matrix[j,i])
 
     return full_matrix, dim
 #######################################
