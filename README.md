@@ -16,7 +16,7 @@ usage: `catpsf.py -p inputlist -w #ofsolventmol -o output.psf`
 
 ## top2psf.py
 This is a working python script that have similar function as Marc's perl script, top2psf.pl, to transfer GROMACS topology file to psf file for
-other use.
+other use. (Right now we only support transferring atom and bond information to psf file)
 
 usage: `top2psf.py -p input.top -o output.psf`
 
