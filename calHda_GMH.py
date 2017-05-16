@@ -29,7 +29,7 @@ parser.add_argument('-m', dest = 'MOcoef', help = 'MO coefficient', type=str)
 parser.add_argument('-f', dest = 'fock', help = 'Fock matrix', type=str)
 parser.add_argument('-s', dest = 'overlap', help = 'Overlap matrix', type=str)
 parser.add_argument('-no', dest = 'orbital', nargs = '+', help = 'Number of donor and acceptor orbitals (not index)',  type=int)
-parser.add_arugment('-o', dest = 'outfile', help = 'Output prefix, gmh as default', type=str)
+parser.add_argument('-o', dest = 'outfile', help = 'Output prefix, gmh as default', type=str)
 
 #parse the arguments and store them in the defined dictionary
 options = vars(parser.parse_args())
