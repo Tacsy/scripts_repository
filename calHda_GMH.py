@@ -248,4 +248,21 @@ energy = MO_val[MO_index]
 dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
 MO = build_mo_matrix(mofile)
 
+#use gmh mathod to calculate the coupling and overall dipole
 Hda, X, Y, Z = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
+
+#################################################
+###############                   ###############  
+###############  OUTPUT STREAMING ############### 
+###############                   ###############
+#################################################
+
+#gmh derived coupling and overall dipole output
+gmh_out = open(outprefix+'_coupling.dat', 'w')
+
+gmh_out.write('%e\n'%Hda)
+gmh_out.write('%e\n'%X)
+gmh_out.write('%e\n'%Y)
+gmh_out.write('%e\n'%Z)
+
+gmh_out.close()
