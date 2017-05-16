@@ -4,17 +4,17 @@
 # this python script is to calculate electronic coupling between two specific frontier orbital using GMH method.
 
 # steps
-#
-#
-#
-#
+# 1) build matrix: Dipole matrix in XYZ, MO matrix
+# 2) use GMH method to calculate the coupling
+# 3) output streaming
 
-# syntax:
+# syntax: calHda_GMH.py -d dipomatrix -m MOcoefmatrix 
 
 
 from sys import argv,exit
 import numpy as np
 import numpy.linalg as la
+from scipy.linalg import sqrtm
 from math import sqrt
 import argparse
 
@@ -26,12 +26,44 @@ script = argv[0]
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', dest = 'dipole', help = 'Dipole matrix, XYZ lower triangular form', type=str)
 parser.add_argument('-m', dest = 'MOcoef', help = 'MO coefficient', type=str)
-parser.add_argument()
-parser.add_argument()
+parser.add_argument('-f', dest = 'fock', help = 'Fock matrix', type=str)
+parser.add_argument('-s', dest = 'overlap', help = 'Overlap matrix', type=str)
+parser.add_argument('-no', dest = 'orbital', nargs = '+', help = 'Number of donor and acceptor orbitals (not index)',  type=int)
+parser.add_arugment('-o', dest = 'outfile', help = 'Output prefix, gmh as default', type=str)
 
 #parse the arguments and store them in the defined dictionary
 options = vars(parser.parse_args())
 
+#input validation
+if options['dipole'] == None:
+    print 'No dipole matrix file found, please try again'
+    exit()
+else:
+    dipofile = options['dipole']
+if options['MOcoef'] == None:
+    print 'No MO coefficient matrix file found, please try again'
+    exit()
+else:
+    mofile = options['MOcoef']
+if options['fock'] == None:
+    print 'No fock matrix file found, please try again'
+    exit()
+else:
+    fockfile = options['fock']
+if options['overlap'] == None:
+    print 'No overlap matrix file found, please try again'
+    exit()
+else:
+    overfile = options['overlap']
+if options['outfile'] == None:
+    outprefix = 'gmh'
+else:
+    outprefix = options['outfile']
+if options['orbital'] == None:
+    print 'No orbital specified, please try again'
+    exit()
+else:
+    dOrb,aOrb = options['orbital']
 #########################
 # 1) build whole matrix
 #########################
@@ -169,3 +201,51 @@ def build_mo_matrix(filename):
     return MO
 ########################################
 
+########################################
+def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
+
+    #AO basis dipole to MO basis dipole
+    MOdipX = MO * dipX * MO.transpose()
+    MOdipY = MO * dipY * MO.transpose()
+    MOdipZ = MO * dipZ * MO.transpose()
+
+    #get the overall dipole
+    X = np.trace(MOdipX)
+    Y = np.trace(MOdipY)
+    Z = np.trace(MOdipZ)
+
+    #since both donor and acceptor orbitals are their corresponding number, not index, minus 1 when in use.
+    H11 = energy[dOrb-1]
+    H22 = energy[aOrb-1]
+    delE = np.abs(H11-H22)
+    mu11 = np.array([MOdipX[dOrb-1,dOrb-1], MOdipY[dOrb-1,dOrb-1], MOdipZ[dOrb-1,dOrb-1]])
+    mu22 = np.array([MOdipX[aOrb-1,aOrb-1], MOdipY[aOrb-1,aOrb-1], MOdipZ[aOrb-1,aOrb-1]])
+    mu12 = np.array([MOdipX[dOrb-1,aOrb-1], MOdipY[dOrb-1,aOrb-1], MOdipZ[dOrb-1,aOrb-1]])
+    delmu = mu11 - mu22
+    Hda = (la.norm(mu12) * delE * 27.2114)/ np.sqrt(la.norm(delmu)**2 + 4.0 * la.norm(mu12)**2) 
+
+    return Hda, X ,Y, Z
+########################################
+
+#main function
+#build matrix
+fock, fock_dim = build_matrix(fockfile)
+over, over_dim = build_matrix(overfile)
+
+if fock_dim != over_dim:
+    print 'The dimension of both matrixs don\'t match. Please look into it and try again'
+    exit()
+
+U_eval, U_evec = la.eig(over)
+over_prime = np.matrix(np.diag(U_eval))
+over_T = U_evec * la.inv(sqrtm(over_prime)) * U_evec.transpose()
+fock_O = over_T.transpose() * fock * over_T
+
+MO_val, MO_vec = la.eig(fock_O)
+MO_index = MO_val.argsort()
+energy = MO_val[MO_index]
+
+dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
+MO = build_mo_matrix(mofile)
+
+Hda, X, Y, Z = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
