@@ -209,11 +209,6 @@ def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
     MOdipY = MO * dipY * MO.transpose()
     MOdipZ = MO * dipZ * MO.transpose()
 
-    #get the overall dipole
-    #X = np.trace(MOdipX)
-    #Y = np.trace(MOdipY)
-    #Z = np.trace(MOdipZ)
-
     #since both donor and acceptor orbitals are their corresponding number, not index, minus 1 when in use.
     H11 = energy[dOrb-1]
     H22 = energy[aOrb-1]
@@ -224,7 +219,7 @@ def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
     delmu = mu11 - mu22
     Hda = (la.norm(mu12) * delE * 27.2114)/ np.sqrt(la.norm(delmu)**2 + 4.0 * la.norm(mu12)**2) 
 
-    return Hda, X ,Y, Z
+    return Hda
 ########################################
 
 #main function
@@ -261,8 +256,5 @@ Hda = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
 gmh_out = open(outprefix+'_coupling.dat', 'w')
 
 gmh_out.write('%e\n'%Hda)
-#gmh_out.write('%e\n'%X)
-#gmh_out.write('%e\n'%Y)
-#gmh_out.write('%e\n'%Z)
 
 gmh_out.close()
