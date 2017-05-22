@@ -21,6 +21,8 @@ parser.add_argument('-m', dest = 'memory', help = 'Memory required for the calcu
 parser.add_argument('-o', dest = 'output', help = 'Output name, input name as default', type = str)
 #add further specific commend for analyzing
 parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data', type = str)
+parser.add_argument('-ct', dest = 'Cterminal', help = 'C terminal residue number', type = str)
+parser.add_argument('-nt', dest = 'Nterminal', help = 'N terminal residue number', type = str)
 
 ######################################################
 ###############                        ###############
@@ -32,6 +34,7 @@ parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific featu
 # addh: add hydrogen to neutralize HEME carboxylic acid group
 # nocap: just use the default coordinates and do no changes to it (warning: this will discard all other features and 
 #        just do nocap) 
+# capback: cap backbone with hydrogen to NH and OH to C=O
 
 #parsing input
 options = vars(parser.parse_args())
@@ -107,7 +110,7 @@ C_H_bond= 1.09
 #we add hydrogen to neutralize COO-, with specific O-H distance
 O_H_bond= 0.98
 
-#case 1: no cap
+#case 1: no cap and just the pdb coordinates
 if 'nocap' in specific_feature:
     #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
     for i in range(1,len(lines)-1):
@@ -121,8 +124,54 @@ if 'nocap' in specific_feature:
         newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
         coord.append(newline)
 
+#case 2: cap the backbone, and in this case we force to include addh
+elif 'capback' in specific_feature:
+    #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
+    if options['Nterminal'] == None or options['Cterminal'] == None:
+        print 'No specific terminal residue nubmer decleared, please try again'
+        exit()
+    else:
+        ct = options['Cterminal']
+        nt = options['Nterminal']
+    
+    for i in range(1,len(lines)-1):
+        line = lines[i]
+        #parse on line
+        if line[22:26].strip() == nt:
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #write line
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',x,y,z)
+            coord.append(newline)
+            #continue
+        elif line[22:26].strip() == ct:
+            if line[76:78].strip() == 'N':
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                #write line
+                newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('O',x,y,z)
+                coord.append(newline)
+                #continue
+            elif line[76:78].strip() == 'H':
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                #write line
+                newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',x,y,z)
+                coord.append(newline)
+                #continue
+        else:
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
 
-#case 2: replace CA and not addh
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+
+#case 3: replace CA and not addh
 elif 'cainclude' not in specific_feature and 'addh' not in specific_feature:
     #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
     for i in range(1,len(lines)-1):
@@ -153,7 +202,7 @@ elif 'cainclude' not in specific_feature and 'addh' not in specific_feature:
             newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
             coord.append(newline)
 
-#case 3: replace CA and addh
+#case 4: replace CA and addh
 elif 'cainclude' not in specific_feature and 'addh' in specific_feature:
     #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
     for i in range(1,len(lines)-1):
@@ -204,7 +253,7 @@ elif 'cainclude' not in specific_feature and 'addh' in specific_feature:
             newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
             coord.append(newline)
 
-#case 4: replace N and C and not addh
+#case 5: replace N and C and not addh
 elif 'cainclude' in specific_feature and 'addh' not in specific_feature:
     #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
     for i in range(1,len(lines)-1):
@@ -247,7 +296,7 @@ elif 'cainclude' in specific_feature and 'addh' not in specific_feature:
             newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
             coord.append(newline)
 
-#case 5: replace N and C and addh
+#case 6: replace N and C and addh
 elif 'cainclude' in specific_feature and 'addh' in specific_feature:
     #since the output pdb file 1st line and -1st line are not coord, discard them in the for loop
     for i in range(1,len(lines)-1):
