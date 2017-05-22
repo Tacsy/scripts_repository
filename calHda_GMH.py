@@ -219,7 +219,7 @@ def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
     delmu = mu11 - mu22
     Hda = (la.norm(mu12) * delE * 27.2114)/ np.sqrt(la.norm(delmu)**2 + 4.0 * la.norm(mu12)**2) 
 
-    return Hda
+    return Hda, H11, H22
 ########################################
 
 #main function
@@ -244,7 +244,10 @@ dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
 MO = build_mo_matrix(mofile)
 
 #use gmh mathod to calculate the coupling and overall dipole
-Hda = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
+Hda, Ed, Ea = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
+#convert energy from hartree to eV
+Ed = Ed * 27.2114
+Ea = Ea * 27.2114
 
 #################################################
 ###############                   ###############  
@@ -254,7 +257,8 @@ Hda = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
 
 #gmh derived coupling and overall dipole output
 gmh_out = open(outprefix+'_coupling.dat', 'w')
-
-gmh_out.write('%e\n'%Hda)
+gmh_out.write('Donor orbital energy:  %e\n'%Ed)
+gmh_out.write('Acceptor orbital energy:  %\n'%Ea)
+gmh_out.write('Coupling:  %e\n'%Hda)
 
 gmh_out.close()
