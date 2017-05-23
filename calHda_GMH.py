@@ -202,12 +202,7 @@ def build_mo_matrix(filename):
 ########################################
 
 ########################################
-def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
-
-    #AO basis dipole to MO basis dipole
-    MOdipX = MO * dipX * MO.transpose()
-    MOdipY = MO * dipY * MO.transpose()
-    MOdipZ = MO * dipZ * MO.transpose()
+def gmh(MOdipX,MOdipY,MOdipZ,energy,dOrb,aOrb):
 
     #since both donor and acceptor orbitals are their corresponding number, not index, minus 1 when in use.
     H11 = energy[dOrb-1]
@@ -223,7 +218,7 @@ def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
 ########################################
 
 ########################################
-def MO_coefficient(ao_list, MO, MOnumber, threshold):
+def IsTheMO(ao_list, MO, MOnumber, threshold):
     #this script is to determine whether a part of AO contribute the most part of MO
     #if the sum over square of MO coefficients if greater than the threshold, return true
     #else return False
@@ -239,6 +234,29 @@ def MO_coefficient(ao_list, MO, MOnumber, threshold):
         return True
     else:
         return False
+########################################
+
+########################################
+def gmh_search(donor_list,acceptor_list,MO_list,threshold,MOdipX,MOdipY,MOdipZ,MO,energy):
+    
+    dOrb_list = []
+    aOrb_list = []
+    
+    coupling = []
+    #determine weather it's a donor MO or acceptor MO
+    for MO_num in MO_list:
+        if IsTheMO(acceptor_list, MO, MO_num, threshold) == True:
+            aOrb_list.append(MO_num)
+        if IsTheMO(donor_list, MO, MO_num, threshold) == True:
+            dOrb_list.append(MO_num)
+    
+    #calculate the couping for the pairs from two lists
+    for aOrb in aOrb_list:
+        for dOrb in dOrb_list:
+            Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
+            coupling.append([Hda, Ed, Ea])
+    
+    return coupling
 ########################################
 
 #main function
@@ -262,8 +280,13 @@ energy = MO_val[MO_index]
 dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
 MO = build_mo_matrix(mofile)
 
+#AO basis dipole to MO basis dipole
+MOdipX = MO * dipX * MO.transpose()
+MOdipY = MO * dipY * MO.transpose()
+MOdipZ = MO * dipZ * MO.transpose()
+ 
 #use gmh mathod to calculate the coupling and overall dipole
-Hda, Ed, Ea = gmh(dipX, dipY, dipZ, MO, energy, dOrb, aOrb)
+Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
 #convert energy from hartree to eV
 Ed = Ed * 27.2114
 Ea = Ea * 27.2114
