@@ -222,6 +222,25 @@ def gmh(dipX,dipY,dipZ,MO,energy,dOrb,aOrb):
     return Hda, H11, H22
 ########################################
 
+########################################
+def MO_coefficient(ao_list, MO, MOnumber, threshold):
+    #this script is to determine whether a part of AO contribute the most part of MO
+    #if the sum over square of MO coefficients if greater than the threshold, return true
+    #else return False
+    
+    #since the MOnumber and ao_list if not the index, we should minus 1 when dealing with 
+    #these parameters
+    L = 0.0
+
+    for i in ao_list:
+        L = L + MO[MOnumber-1,i-1]**2 
+
+    if L >= threshold:
+        return True
+    else:
+        return False
+########################################
+
 #main function
 #build matrix
 fock, fock_dim = build_matrix(fockfile)
@@ -258,7 +277,7 @@ Ea = Ea * 27.2114
 #gmh derived coupling and overall dipole output
 gmh_out = open(outprefix+'_coupling.dat', 'w')
 gmh_out.write('Donor orbital energy:  %e\n'%Ed)
-gmh_out.write('Acceptor orbital energy:  %\n'%Ea)
+gmh_out.write('Acceptor orbital energy:  %e\n'%Ea)
 gmh_out.write('Coupling:  %e\n'%Hda)
 
 gmh_out.close()
