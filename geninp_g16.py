@@ -138,13 +138,22 @@ elif 'capback' in specific_feature:
         line = lines[i]
         #parse on line
         if line[22:26].strip() == nt:
-            x = float(line[30:38].strip())
-            y = float(line[38:46].strip())
-            z = float(line[46:54].strip())
-            #write line
-            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',x,y,z)
-            coord.append(newline)
-            #continue
+            if line[12:16].strip() == 'C':
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                #write line
+                newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',x,y,z)
+                coord.append(newline)
+                continue
+            else:
+                element = line[76:78].strip()
+                x = float(line[30:38].strip())
+                y = float(line[38:46].strip())
+                z = float(line[46:54].strip())
+                newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+                coord.append(newline)
+                continue
         elif line[22:26].strip() == ct:
             if line[76:78].strip() == 'N':
                 x = float(line[30:38].strip())
@@ -162,6 +171,26 @@ elif 'capback' in specific_feature:
                 newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',x,y,z)
                 coord.append(newline)
                 #continue
+        elif 'O1A' == line[12:16].strip() or 'O1D' == line[12:16].strip():
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get coord of CG
+            refline = lines[i-2]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            CO_length = ((x-x_ref)**2+(y-y_ref)**2+(z-z_ref)**2)**0.5
+            newx = x + (x - x_ref)*O_H_bond/CO_length
+            newy = y + (y - y_ref)*O_H_bond/CO_length
+            newz = z + (z - z_ref)*O_H_bond/CO_length
+            #write two line 
+            newline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format(element,x,y,z)
+            coord.append(newline)
+            addline = '{:>2}             {:>14.8f}{:>14.8f}{:>14.8f}\n'.format('H',newx,newy,newz)
+            coord.append(addline)
         else:
             element = line[76:78].strip()
             x = float(line[30:38].strip())
