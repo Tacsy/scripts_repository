@@ -124,5 +124,223 @@ def pdb2com(lines):
 
 #refine function
 #from pdb format to pdb format, only refine several lines
+def cap_backbone(lines, nterminal, cterminal):
+    newlines = []
+    for i in range(len(lines)):
+        line = lines[i]
+        #parse one line
+        if line[22:26].strip() == nt:
+            if line[12:16].strip() == 'C':
+                #write line
+                linelist = list(line)
+                #revise atom type and atom name
+                linelist[12:16] = ' HR '
+                linelist[76:78] = ' H'
+                newline = ''.join(linelist)
+                newlines.append(newline)
+                continue
+            else:
+                newlines.append(line)
+                continue
+        elif line[22:26].strip() == ct:
+            if line[12:16].strip() == 'N':
+                #write line
+                linelist = list(line)
+                #revise atom type and atom name
+                linelist[12:16] = ' OR '
+                linelist[76:78] = ' O'
+                newline = ''.join(linelist)
+                newlines.append(newline)
+                continue
+            elif line[12:16].strip() == 'HN':
+                #write line
+                linelist = list(line)
+                #revise atom type and atom name
+                linelist[12:16] = ' HR '
+                linelist[76:78] = ' H'
+                newline = ''.join(linelist)
+                newlines.append(newline)
+                continue
+            else:    
+                newlines.append(line)
+                continue
+        else:
+            newlines.append(line)
+    
+    return newlines
 
- 
+def addh_heme(lines):
+    #default value for OH bond length
+    O_H_bond= 0.98
+    newlines = []
+    for i in range(len(lines)):
+        line = lines[i]
+        #parse one line
+        if (line[12:16].strip() == 'O1A' and line[17:20].strip() == 'HEME') or (line[12:16].strip() == 'O1D' and line[17:20].strip() == 'HEME'):
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get coord of CG
+            refline = lines[i-2]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            CO_length = ((x-x_ref)**2+(y-y_ref)**2+(z-z_ref)**2)**0.5
+            newx = x + (x - x_ref)*O_H_bond/CO_length
+            newy = y + (y - y_ref)*O_H_bond/CO_length
+            newz = z + (z - z_ref)*O_H_bond/CO_length
+            #write two line 
+            addline = line
+            linelist = list(addline)
+            #revise atom type and atom name
+            if line[12:16].strip() == 'O1A':
+                linelist[12:16] = ' HR1'
+            else:
+                linelist[12:16] = ' HR2'
+            linelist[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx,newy,newz)
+            #linelist[38:46] = '{:>8.3f}'.format(newy)
+            #linelist[46:54] = '{:>8.3f}'.format(newz)
+            linelist[76:78] = ' H'
+            newline = ''.join(linelist)
+            newlines.append(line)
+            newlines.append(newline)
+        else:
+            newlines.append(line)
+
+    return newlines
+
+def cap_sidechain(lines):
+    C_H_bond = 1.09
+    newlines = []
+    for i in range(len(lines)):
+        line = lines[i]
+        if line[12:16].strip() == 'CA':
+            x_ca = float(line[30:38].strip())
+            y_ca = float(line[38:46].strip())
+            z_ca = float(line[46:54].strip())
+            #get coord of beta-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_ca-x_ref)**2+(y_ca-y_ref)**2+(z_ca-z_ref)**2)**0.5
+            newx = x_ref + (x_ca - x_ref)*C_H_bond/length
+            newy = y_ref + (y_ca - y_ref)*C_H_bond/length
+            newz = z_ref + (z_ca - z_ref)*C_H_bond/length
+            #get the new coordinates replaced 
+            linelist = list(line)
+            linelist[12:16] = ' HR '
+            linelist[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx,newy,newz)
+            #linelist[38:46] = '{:>8.3f}'.format(newy)
+            #linelist[46:54] = '{:>8.3f}'.format(newz)
+            linelist[76:78] = ' H'
+            newline = ''.join(linelist)
+            newlines.append(newline)
+        else:
+            newlines.append(line)
+    return newlines
+
+def cap_sidechain_more(lines):
+    C_H_bond = 1.09
+    newlines = []
+    for i in range(len(lines)):
+        line = lines[i]
+        if line[12:16].strip() == 'N':
+            x_n = float(line[30:38].strip())
+            y_n = float(line[38:46].strip())
+            z_n = float(line[46:54].strip())
+            #get coord of alpha-C
+            refline = lines[i+1]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord
+            length = ((x_n-x_ref)**2+(y_n-y_ref)**2+(z_n-z_ref)**2)**0.5
+            newx = x_ref + (x_n - x_ref)*C_H_bond/length
+            newy = y_ref + (y_n - y_ref)*C_H_bond/length
+            newz = z_ref + (z_n - z_ref)*C_H_bond/length
+            #get the new coordinates replaced
+            linelist = list(line)
+            linelist[12:16] = ' HR1'
+            linelist[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx,newy,newz)
+            #linelist[38:46] = '{:>8.3f}'.format(newy)
+            #linelist[46:54] = '{:>8.3f}'.format(newz)
+            linelist[76:78] = ' H'
+            newline = ''.join(linelist)
+            newlines.append(newline)
+        elif line[12:16].strip() == 'C':
+            x_c = float(line[30:38].strip())
+            y_c = float(line[38:46].strip())
+            z_c = float(line[46:54].strip())
+            #calculate the new coord
+            length = ((x_c-x_ref)**2+(y_c-y_ref)**2+(z_c-z_ref)**2)**0.5
+            newx = x_ref + (x_c - x_ref)*C_H_bond/length
+            newy = y_ref + (y_c - y_ref)*C_H_bond/length
+            newz = z_ref + (z_c - z_ref)*C_H_bond/length
+            #get the new coordinates replaced
+            linelist = list(line)
+            linelist[12:16] = ' HR2'
+            linelist[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx,newy,newz)
+            #linelist[38:46] = '{:>8.3f}'.format(newy)
+            #linelist[46:54] = '{:>8.3f}'.format(newz)
+            linelist[76:78] = ' H'
+            newline = ''.join(linelist)
+            newlines.append(newline)
+        else:
+            newlines.append(line)
+    return newlines
+
+######################################################
+###############                        ###############
+###############    OUTPUT STREAMING    ###############
+###############                        ###############
+######################################################
+
+#start parsing and refining the coordinates
+
+#find specific feature in -s argument
+if 'addh' in specific_feature:
+    lines = addh_heme(lines)
+if 'cap_back' in specific_feature:
+    if options['Cterminal'] == None or options['Nterminal'] == None:
+        print 'No specific terminal residue number decleared, please try again'
+        exit()
+    else:
+        ct = options['Cterminal']
+        nt = options['Nterminal']
+        lines = cap_backbone(lines, nt, ct)
+if 'cap_side' in specific_feature:
+    lines = cap_sidechain(lines)
+if 'cap_sidemore' in specific_feature:
+    lines = cap_sidechain_more(lines)
+
+#after these specific features, convert pdb to com format
+coordinates = pdb2com(lines)
+
+
+#start writing g16 input files
+#write header
+fo = open(name+'_template.com', 'w')
+fo.write('%chk='+name+'_template.chk\n')
+fo.write('%rwf='+name+'_template.rwf\n')
+fo.write('%nprocshared='+nprocshared+'\n')
+fo.write('%mem='+mem+'\n')
+#inplement in this #p command will be develped further
+fo.write('#p functional/basis Pop=Full keyword\n')
+fo.write('\n')
+fo.write('ab initio calculation for '+name+'\n')
+fo.write('\n')
+#default charge and multiplicity is 0 1
+fo.write('0 1\n')
+for line in coordinates:
+    fo.write(line)
+
+#extend several blank lines
+fo.write('\n')
+
+fo.close()
+
+
