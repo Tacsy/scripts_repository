@@ -41,8 +41,7 @@ if options['dipole'] == None:
 else:
     dipofile = options['dipole']
 if options['MOcoef'] == None:
-    print 'No MO coefficient matrix file found, please try again'
-    exit()
+    print 'No MO coefficient matrix file found, we will use fock matrix and overlap matrix to calculate MO coefficient'
 else:
     mofile = options['MOcoef']
 if options['fock'] == None:
@@ -202,6 +201,42 @@ def build_mo_matrix(filename):
 ########################################
 
 ########################################
+def gen_mo_matrix(fock,over):
+    
+    #build orthogonal fock matrix
+    U_eval, U_evec = la.eig(over)
+    over_prime = np.matrix(np.diag(U_eval))
+    over_T = U_evec * la.inv(sqrtm(over_prime)) * U_evec.transpose()
+    fock_O = over_T.transpose() * fock * over_T
+    
+    #diagonalize fock matrix and get MO coefficient
+    MO_val, MO_vec = la.eig(fock_O)
+    MO_index = MO_val.argsort()
+    MO_vec = MO_vec[:,MO_index]
+    MO = over_T * MO_vec
+    MO = MO.transpose()
+
+    return MO
+########################################
+
+########################################
+def gen_energy(fock,over):
+    
+    #build orthogonal fock matrix
+    U_eval, U_evec = la.eig(over)
+    over_prime = np.matrix(np.diag(U_eval))
+    over_T = U_evec * la.inv(sqrtm(over_prime)) * U_evec.transpose()
+    fock_O = over_T.transpose() * fock * over_T
+    
+    #diagonalize fock matrix and get MO enrgy 
+    MO_val, MO_vec = la.eig(fock_O)
+    MO_index = MO_val.argsort()
+    energy = MO_val[MO_index]
+
+    return energy
+########################################
+
+########################################
 def gmh(MOdipX,MOdipY,MOdipZ,energy,dOrb,aOrb):
 
     #since both donor and acceptor orbitals are their corresponding number, not index, minus 1 when in use.
@@ -268,18 +303,14 @@ if fock_dim != over_dim:
     print 'The dimension of both matrixs don\'t match. Please look into it and try again'
     exit()
 
-U_eval, U_evec = la.eig(over)
-over_prime = np.matrix(np.diag(U_eval))
-over_T = U_evec * la.inv(sqrtm(over_prime)) * U_evec.transpose()
-fock_O = over_T.transpose() * fock * over_T
+if options['MOcoef'] == None:
+    MO = gen_mo_matrix(fock,over)
+else:
+    MO = build_mo_matrix(mofile)
 
-MO_val, MO_vec = la.eig(fock_O)
-MO_index = MO_val.argsort()
-energy = MO_val[MO_index]
+energy = gen_energy(fock,over)
 
 dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
-MO = build_mo_matrix(mofile)
-
 #AO basis dipole to MO basis dipole
 MOdipX = MO * dipX * MO.transpose()
 MOdipY = MO * dipY * MO.transpose()
