@@ -29,6 +29,12 @@ single molecule to include in QM calculations, and further specific feature is i
 
 usage: `geninp_g16.py -p input.pdb -n nprocshared -m memory -s specific_feature -o output` 
 
+## g16geninp.py
+This python script is to build template gaussian 16 input file from extracted PDB file, in a clean and compact version comparing to previous
+`geninp_g16.py`
+
+usage: `g16geninp.py -p input -n nprocshared -m memory -s specific_feature [-nt nterminal -ct cterminal] -o output`
+
 ## calHda_BD.py
 This python script is to calculate electronic coupling based on Block Diagonalization method.
 
