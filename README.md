@@ -39,3 +39,8 @@ usage: `g16geninp.py -p input -n nprocshared -m memory -s specific_feature [-nt 
 This python script is to calculate electronic coupling based on Block Diagonalization method.
 
 usage: `calHda_BD.py -f fock -s overlap -nb #ofbasis -ne #ofelectron -o output_prefix`
+
+## calHda_GMH.py
+This python script is to calculate electronic coupling based on orbital-based GMH method.
+
+usage: `calHda_GMH.py -f fock -s overlap [-m MO_coefficient] -d dipole -no orbitals -o output`
