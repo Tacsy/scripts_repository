@@ -30,7 +30,10 @@ parser.add_argument('-f', dest = 'fock', help = 'Fock matrix', type=str)
 parser.add_argument('-s', dest = 'overlap', help = 'Overlap matrix', type=str)
 parser.add_argument('-no', dest = 'orbital', nargs = '+', help = 'Number of donor and acceptor orbitals (not index)',  type=int)
 parser.add_argument('-o', dest = 'outfile', help = 'Output prefix, gmh as default', type=str)
-
+parser.add_argument('-ml', dest = 'MOlist', nargs = '+', help = 'MO number (not index) for searching', type=int)
+parser.add_argument('-al', dest = 'acceptorlist', nargs = '+', help = 'Acceptor AO number (not index) for searching', type=int)
+parser.add_argument('-dl', dest = 'donorlist', nargs = '+', help = 'Donor AO number (not index) for searching', type=int)
+parser.add_argument('--length_threshold', dest = 'threshold', help = 'length of localization threshold, 0.3 as default', type=float)
 #parse the arguments and store them in the defined dictionary
 options = vars(parser.parse_args())
 
@@ -58,11 +61,16 @@ if options['outfile'] == None:
     outprefix = 'gmh'
 else:
     outprefix = options['outfile']
-if options['orbital'] == None:
+if options['orbital'] == None and options['MOlist'] == None and options['acceptorlist'] == None and options['donorlist'] == None:
     print 'No orbital specified, please try again'
     exit()
-else:
+elif options['orbital'] != None:
     dOrb,aOrb = options['orbital']
+else:
+    molist = options['MOlist']
+    alist = options['acceptorlist']
+    dlist = options['donorlist']
+
 #########################
 # 1) build whole matrix
 #########################
@@ -249,7 +257,8 @@ def gmh(MOdipX,MOdipY,MOdipZ,energy,dOrb,aOrb):
     delmu = mu11 - mu22
     Hda = (la.norm(mu12) * delE * 27.2114)/ np.sqrt(la.norm(delmu)**2 + 4.0 * la.norm(mu12)**2) 
 
-    return Hda, H11, H22
+    #return energy and coupling are all in eV unit
+    return Hda, H11*27.2114, H22*27.2114
 ########################################
 
 ########################################
@@ -289,9 +298,19 @@ def gmh_search(donor_list,acceptor_list,MO_list,threshold,MOdipX,MOdipY,MOdipZ,M
     for aOrb in aOrb_list:
         for dOrb in dOrb_list:
             Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
-            coupling.append([Hda, Ed, Ea])
+            coupling.append((Hda, Ed, Ea))
     
     return coupling
+########################################
+
+########################################
+def build_list(lst):
+    #this function read a list containing a min orbital number and a max orbital number, and return
+    #a list starting from min to max.
+    minval = min(lst)
+    maxval = max(lst)
+    
+    return range(minval,maxval+1)
 ########################################
 
 #main function
@@ -315,12 +334,21 @@ dipX, dipY, dipZ, dip_dim = build_dipo_matrix(dipofile)
 MOdipX = MO * dipX * MO.transpose()
 MOdipY = MO * dipY * MO.transpose()
 MOdipZ = MO * dipZ * MO.transpose()
- 
+
 #use gmh mathod to calculate the coupling and overall dipole
-Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
-#convert energy from hartree to eV
-Ed = Ed * 27.2114
-Ea = Ea * 27.2114
+#if only calculate specific pairs of orbitals
+if options['orbital'] != None:
+    coupling = []
+    coupling.append(gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb))
+else:
+    if options['threshold'] == None:
+        threshold = 0.3
+    else:
+        threshold = options['threshold']
+    molist = build_list(molist)
+    alist = build_list(alist)
+    dlist = build_list(dlist)
+    coupling = gmh_search(dlist,alist,molist,threshold,MOdipX,MOdipY,MOdipZ,MO,energy)
 
 #################################################
 ###############                   ###############  
@@ -330,8 +358,7 @@ Ea = Ea * 27.2114
 
 #gmh derived coupling and overall dipole output
 gmh_out = open(outprefix+'_coupling.dat', 'w')
-gmh_out.write('Donor orbital energy:  %e\n'%Ed)
-gmh_out.write('Acceptor orbital energy:  %e\n'%Ea)
-gmh_out.write('Coupling:  %e\n'%Hda)
-
+gmh_out.write('#FORMAT:coupling   donor energy   acceptor energy\n')
+for lst in coupling:
+    gmh_out.write('{:>15.8e}{:>15.8e}{:>15.8e}\n'.format(lst[0],lst[1],lst[2]))
 gmh_out.close()
