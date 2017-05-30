@@ -43,4 +43,4 @@ usage: `calHda_BD.py -f fock -s overlap -nb #ofbasis -ne #ofelectron -o output_p
 ## calHda_GMH.py
 This python script is to calculate electronic coupling based on orbital-based GMH method.
 
-usage: `calHda_GMH.py -f fock -s overlap [-m MO_coefficient] -d dipole -no orbitals -o output`
+usage: `calHda_GMH.py -f fock -s overlap [-m MO_coefficient] -d dipole [-no orbitals -al acceptor_list -dl donor_list -ml mo_list --length_threshold threshold]-o output`
