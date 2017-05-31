@@ -288,6 +288,7 @@ def gmh_search(donor_list,acceptor_list,MO_list,threshold,MOdipX,MOdipY,MOdipZ,M
     
     coupling = []
     #determine weather it's a donor MO or acceptor MO
+    maxOrb = max(MO_list)
     for MO_num in MO_list:
         if IsTheMO(acceptor_list, MO, MO_num, threshold) == True:
             aOrb_list.append(MO_num)
@@ -298,7 +299,7 @@ def gmh_search(donor_list,acceptor_list,MO_list,threshold,MOdipX,MOdipY,MOdipZ,M
     for aOrb in aOrb_list:
         for dOrb in dOrb_list:
             Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
-            coupling.append((Hda, Ed, Ea))
+            coupling.append((Hda, Ed, Ea, dOrb-maxOrb, aOrb-maxOrb))
     
     return coupling
 ########################################
@@ -339,7 +340,8 @@ MOdipZ = MO * dipZ * MO.transpose()
 #if only calculate specific pairs of orbitals
 if options['orbital'] != None:
     coupling = []
-    coupling.append(gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb))
+    Hda, Ed, Ea = gmh(MOdipX, MOdipY, MOdipZ, energy, dOrb, aOrb)
+    coupling.append((Hda, Ed, Ea, dOrb, aOrb))
 else:
     if options['threshold'] == None:
         threshold = 0.3
@@ -360,5 +362,5 @@ else:
 gmh_out = open(outprefix+'_coupling.dat', 'w')
 gmh_out.write('#FORMAT:coupling   donor energy   acceptor energy\n')
 for lst in coupling:
-    gmh_out.write('{:>15.8e}{:>15.8e}{:>15.8e}\n'.format(lst[0],lst[1],lst[2]))
+    gmh_out.write('{:>15.8e}{:>5d}  {:>15.8e}{:>5d}  {:>15.8e}\n'.format(lst[0],lst[3],lst[1],lst[4],lst[2]))
 gmh_out.close()
