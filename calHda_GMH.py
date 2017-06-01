@@ -270,9 +270,18 @@ def IsTheMO(ao_list, MO, MOnumber, threshold):
     #since the MOnumber and ao_list if not the index, we should minus 1 when dealing with 
     #these parameters
     L = 0.0
+    
+    #we will normalize the L by deviding it to the sum of square of every coefficient in 
+    #every MO
+    #for AO with overlap matrix identity, this procedure can be neglected since SUM would be 1
+    #for AO with non-orthogonality, this procedure will calculate the percentage of AO contribution
+
+    this_MO = MO[MOnumber-1].tolist()[0]
+    SUM = sum(map(lambda x:x**2,this_MO))
 
     for i in ao_list:
         L = L + MO[MOnumber-1,i-1]**2 
+    L = L/SUM
 
     if L >= threshold:
         return True
