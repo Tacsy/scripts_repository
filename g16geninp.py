@@ -19,8 +19,8 @@ parser.add_argument('-m', dest = 'mem', help = 'Memory required for the calculat
 parser.add_argument('-o', dest = 'output', help = 'Output name, input name as default', type = str)
 #add further specific commend for analyzing
 parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data, currently supported:cap_sidemore,cap_side,cap_back,addh,repzn' type = str)
-parser.add_argument('-ct', dest = 'Cterminal', help = 'C terminal residue number', type = str)
-parser.add_argument('-nt', dest = 'Nterminal', help = 'N terminal residue number', type = str)
+parser.add_argument('-ct', dest = 'Cterminal', nargs = '+', help = 'C terminal residue number', type = str)
+parser.add_argument('-nt', dest = 'Nterminal', nargs = '+', help = 'N terminal residue number', type = str)
 
 ######################################################
 ###############                        ###############
@@ -124,12 +124,12 @@ def pdb2com(lines):
 
 #refine function
 #from pdb format to pdb format, only refine several lines
-def cap_backbone(lines, nterminal, cterminal):
+def cap_backbone(lines, nt, ct):
     newlines = []
     for i in range(len(lines)):
         line = lines[i]
         #parse one line
-        if line[22:26].strip() == nt:
+        if line[22:26].strip() in nt:
             if line[12:16].strip() == 'C':
                 #write line
                 linelist = list(line)
@@ -142,7 +142,7 @@ def cap_backbone(lines, nterminal, cterminal):
             else:
                 newlines.append(line)
                 continue
-        elif line[22:26].strip() == ct:
+        elif line[22:26].strip() in ct:
             if line[12:16].strip() == 'N':
                 #write line
                 linelist = list(line)
