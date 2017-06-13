@@ -18,7 +18,7 @@ parser.add_argument('-n', dest = 'nproc', help = 'Number of CPU cores', type = s
 parser.add_argument('-m', dest = 'mem', help = 'Memory required for the calculation, unit in GB', type = str)
 parser.add_argument('-o', dest = 'output', help = 'Output name, input name as default', type = str)
 #add further specific commend for analyzing
-parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data', type = str)
+parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data, currently supported:cap_sidemore,cap_side,cap_back,addh,repzn' type = str)
 parser.add_argument('-ct', dest = 'Cterminal', help = 'C terminal residue number', type = str)
 parser.add_argument('-nt', dest = 'Nterminal', help = 'N terminal residue number', type = str)
 
@@ -28,11 +28,11 @@ parser.add_argument('-nt', dest = 'Nterminal', help = 'N terminal residue number
 ###############                        ###############
 ######################################################
 
-# cainclude: not use H to replace CA, use H to replace C and N bonded with CA instead
+# cap_sidemore: not use H to replace CA, use H to replace C and N bonded with CA instead
+# cap_side
+# cap_back: cap backbone with hydrogen to NH and OH to C=O
 # addh: add hydrogen to neutralize HEME carboxylic acid group
-# nocap: just use the default coordinates and do no changes to it (warning: this will discard all other features and 
-#        just do nocap) 
-# capback: cap backbone with hydrogen to NH and OH to C=O
+# repzn: replace zinc in heme with hydrogenated nitrogen
 
 #parsing input
 options = vars(parser.parse_args())
@@ -49,7 +49,7 @@ else:
 if options['nproc'] == None:
     nprocshared = '4'
 else:
-    nprocshared = options['nprocshared']
+    nprocshared = options['nproc']
 
 # -m argument
 if options['mem'] == None:
@@ -176,13 +176,13 @@ def addh_heme(lines):
     for i in range(len(lines)):
         line = lines[i]
         #parse one line
-        if (line[12:16].strip() == 'O1A' and line[17:20].strip() == 'HEME') or (line[12:16].strip() == 'O1D' and line[17:20].strip() == 'HEME'):
+        if (line[12:16].strip() == 'O1A' and line[17:21].strip() == 'HEME') or (line[12:16].strip() == 'O1D' and line[17:21].strip() == 'HEME'):
             element = line[76:78].strip()
             x = float(line[30:38].strip())
             y = float(line[38:46].strip())
             z = float(line[46:54].strip())
             #get coord of CG
-            refline = lines[i-2]
+            refline = lines[i-1]
             x_ref = float(refline[30:38].strip())
             y_ref = float(refline[38:46].strip())
             z_ref = float(refline[46:54].strip())
@@ -206,6 +206,58 @@ def addh_heme(lines):
             newline = ''.join(linelist)
             newlines.append(line)
             newlines.append(newline)
+        else:
+            newlines.append(line)
+
+    return newlines
+
+def replace_zinc(lines):
+    #default N-H bond length value
+    N_H_bond = 1.00
+    newlines = []
+    
+    for i in range(len(lines)):
+        line = lines[i]
+        #parse one line
+        if line[12:16].strip() == 'ZN' and line[17:21].strip() == 'HEME':
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get the other two nitrogen atoms that we will hydrogenate
+            N1 = lines[i+1]
+            x_n1 = float(N1[30:38].strip())
+            y_n1 = float(N1[38:46].strip())
+            z_n1 = float(N1[46:54].strip())
+            N3 = lines[i+3]
+            x_n3 = float(N3[30:38].strip())
+            y_n3 = float(N3[38:46].strip())
+            z_n3 = float(N3[46:54].strip())
+            #calculate the new coords of hydrogens
+            length1 = ((x-x_n1)**2+(y-y_n1)**2+(z-z_n1)**2)**0.5
+            newx1 = x_n1 + (x - x_n1)*N_H_bond/length1
+            newy1 = y_n1 + (y - y_n1)*N_H_bond/length1
+            newz1 = z_n1 + (z - z_n1)*N_H_bond/length1
+    
+            length3 = ((x-x_n3)**2+(y-y_n3)**2+(z-z_n3)**2)**0.5
+            newx3 = x_n3 + (x - x_n3)*N_H_bond/length3
+            newy3 = y_n3 + (y - y_n3)*N_H_bond/length3
+            newz3 = z_n3 + (z - z_n3)*N_H_bond/length3
+            #write two newlins of hydrogen
+            addline1 = line
+            addline2 = line
+            linelist1 = list(addline1)
+            linelist2 = list(addline2)
+            #revise atom type and atom name
+            linelist1[12:16] = ' HN1'
+            linelist2[12:16] = ' HN2'
+            linelist1[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx1,newy1,newz1)
+            linelist2[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx3,newy3,newz3)
+            linelist1[76:78] = ' H'
+            linelist2[76:78] = ' H'
+            newline1 = ''.join(linelist1)
+            newline2 = ''.join(linelist2)
+            newlines.append(newline1)
+            newlines.append(newline2)
         else:
             newlines.append(line)
 
@@ -304,6 +356,8 @@ def cap_sidechain_more(lines):
 #find specific feature in -s argument
 if 'addh' in specific_feature:
     lines = addh_heme(lines)
+if 'repzn' in specific_feature:
+    lines = replace_zinc(lines)
 if 'cap_back' in specific_feature:
     if options['Cterminal'] == None or options['Nterminal'] == None:
         print 'No specific terminal residue number decleared, please try again'
