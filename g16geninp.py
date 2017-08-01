@@ -18,7 +18,7 @@ parser.add_argument('-n', dest = 'nproc', help = 'Number of CPU cores', type = s
 parser.add_argument('-m', dest = 'mem', help = 'Memory required for the calculation, unit in GB', type = str)
 parser.add_argument('-o', dest = 'output', help = 'Output name, input name as default', type = str)
 #add further specific commend for analyzing
-parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data, currently supported:cap_sidemore,cap_side,cap_back,addh,repzn' type = str)
+parser.add_argument('-s', dest = 'specific', nargs = '+', help = 'Specific feature for parsing input data, currently supported:cap_sidemore,cap_side,cap_back,addh,repzn', type = str)
 parser.add_argument('-ct', dest = 'Cterminal', nargs = '+', help = 'C terminal residue number', type = str)
 parser.add_argument('-nt', dest = 'Nterminal', nargs = '+', help = 'N terminal residue number', type = str)
 
