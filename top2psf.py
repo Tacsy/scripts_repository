@@ -50,9 +50,9 @@ BONDS = []
 bond_tmp = []
 
 #get the index of specific section, here we only need atoms and bonds info
-atom = lines.index('[ atoms ]')
-bond = lines.index('[ bonds ]')
-pair = lines.index('[ pairs ]')
+atom = lines.index('[ atoms ]\n')
+bond = lines.index('[ bonds ]\n')
+pair = lines.index('[ pairs ]\n')
 
 #read atom info
 for i in range(atom+1,bond):
@@ -105,8 +105,8 @@ out = open(outfile, 'w')
 #header streaming
 out.write('PSF\n')
 out.write('       4 !NTITLE\n')
-out.write(' REMARKS TOPOLOGY CREATED BY PYTHON SCRIPT (XUYAN RU)')
-out.write(' REMARKS CONTACT XUYAN.RU@DUKE.EDU')
+out.write(' REMARKS TOPOLOGY CREATED BY PYTHON SCRIPT (XUYAN RU)\n')
+out.write(' REMARKS CONTACT XUYAN.RU@DUKE.EDU\n')
 out.write('\n')
 
 #atom info streaming
@@ -125,14 +125,15 @@ out.write('{:>8s} !NBOND: bonds\n'.format(str(num_of_bond)))
 for line in BONDS:
     out.write(line)
 
-lastline = ''
-for string in bond_tmp:
-    lastline = lastline + '{:>8s}'.format(string)
+if len(bond_tmp) != 0:
+    lastline = ''
+    for string in bond_tmp:
+        lastline = lastline + '{:>8s}'.format(string)
 
-lastline = lastline + '\n'
+    lastline = lastline + '\n'
  
-out.write(lastline)
-out.write('\n') 
+    out.write(lastline)
+#out.write('\n') 
 #finish writing the output file, close the file
 out.close()
 
