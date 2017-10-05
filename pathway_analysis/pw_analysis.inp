@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+#SBATCH
+#SBATCH -o pw_analysis.out
+#SBATCH -e pw_analysis.err
+#SBATCH -J PATHWAY
+#SBATCH -n 1
+#SBATCH -p et2
+#SBATCH -c 4
+#SBATCH --mem=8000
+#SBATCH -t 5-00:00:00
+
+
+#define the working directory
+WORKDIRECTORY=
+#get in that directory
+cd ${WORKDIRECTORY}
+
+#module load vmd
+module load vmd/1.9.2
+
+PDBNAME=frame0
+
+#for loop for 2000 snapshots
+for i in {0..2000}
+do
+    #for every single snapshots, do the following
+    #run vmd PATHWAY plugin
+    #replace the name of pdb to load
+    CURRENTPDBNAME=frame${i}
+    sed -i '1s/'${PDBNAME}'/'${CURRENTPDBNAME}'/' findpathways.tcl
+    sed -i '3s/'${PDBNAME}'/'${CURRENTPDBNAME}'/' findpathways.tcl
+    PDBNAME=${CURRENTPDBNAME}
+    
+    OUTPUTNAME=output_file_${i}.log
+    #run vmd PATHWAY plugin
+    vmd -dispdev text -e findpathways.tcl >& ${OUTPUTNAME}
+    
+    #remove redundant file
+    #rm pathways*
+
+    #use parse to extract the useful information 
+    ./parsepathway.inp ${OUTPUTNAME}
+
+    #remove redundant file
+    rm pathway_${i}*
+
+done
+
+
+

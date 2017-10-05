@@ -1,0 +1,27 @@
+#!/bin/bash
+#The aim of the script si to extract the n-st pathways to its own file.
+
+#syntax: parse filename
+
+filename=$1
+filenum=`echo ${filename}|cut -d '.' -f 1|cut -d '_' -f 3`
+
+for i in {1..9}
+do
+    initnum=`grep -n "PATH ${i}:" ${filename}|cut -d ":" -f 1`
+    findnum=$(($i+1))
+    num=`grep -n "PATH ${findnum}:" ${filename}|cut -d ":" -f 1`
+    finalnum=$(($num-2))
+    outputname='pathway_'${filenum}'_'$i'.log'
+    sed -n ''${initnum}','${finalnum}'p' ${filename} >  ${outputname}
+done
+
+final=`grep -n "PATH 10:" ${filename}|cut -d ":" -f 1`
+ffinal=`grep -n "ALL DONE!" ${filename}|cut -d ":" -f 1`
+finalnum=$(($ffinal-2))
+outputname='pathway_'${filenum}'_10.log'
+sed -n ''${final}','${finalnum}'p' ${filename} > ${outputname}
+
+
+./findpathways.py ${filenum} 10
+
