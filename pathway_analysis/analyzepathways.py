@@ -40,14 +40,19 @@ for i in range(int(num)):
     
 
 #write output file
-outputfile = open('SUMMERY_PATHWAY.log','w')
+outputfile = open('SUMMERY_PATHWAY_FREQ.log','w')
 
 #write lines, every line with key:value pair
-for key in pathway_dict.keys():
-    #generate the lines
-    line = key+':'+str(pathway_dict[key])+'\n'
-    
+for key, value in sorted(pathway_dict.iteritems(), key=lambda (k,v):(v,k), reverse=True):
+    line = key+': '+str(value)+'\n'
+
     outputfile.write(line)
+
+#for key in pathway_dict.keys():
+#    #generate the lines
+#    line = key+':'+str(pathway_dict[key])+'\n'
+#    
+#    outputfile.write(line)
 
 #after summerizing all the pathways, close the outputfile
 outputfile.close()
