@@ -41,7 +41,7 @@ for i in range(int(num)):
     lastkeys = path[-1].split()
     lastres = lastkeys[8]+lastkeys[9]
     if lastres not in pathway:
-        pathway.append(res)
+        pathway.append(lastres)
     
     pathwayout.write('>'.join(pathway)+'\n')
 
