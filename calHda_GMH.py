@@ -250,7 +250,9 @@ def gmh(MOdipX,MOdipY,MOdipZ,energy,dOrb,aOrb):
     #since both donor and acceptor orbitals are their corresponding number, not index, minus 1 when in use.
     H11 = energy[dOrb-1]
     H22 = energy[aOrb-1]
-    delE = np.abs(H11-H22)
+    #comment this line since we want the coupling term to be both negative and positive, for calculating the variance
+    #delE = np.abs(H11-H22)
+    delE = H11-H22
     mu11 = np.array([MOdipX[dOrb-1,dOrb-1], MOdipY[dOrb-1,dOrb-1], MOdipZ[dOrb-1,dOrb-1]])
     mu22 = np.array([MOdipX[aOrb-1,aOrb-1], MOdipY[aOrb-1,aOrb-1], MOdipZ[aOrb-1,aOrb-1]])
     mu12 = np.array([MOdipX[dOrb-1,aOrb-1], MOdipY[dOrb-1,aOrb-1], MOdipZ[dOrb-1,aOrb-1]])
