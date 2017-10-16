@@ -3,7 +3,7 @@
 
 #this script is to analysis geomatry/coordinates of specific molecule or system
 
-
+from sys import argv, exit
 import numpy as np
 
 
@@ -57,5 +57,15 @@ def radius(coordinate,atlist=None):
         radius_geometric = -(-xyz)**(1./3)
 
     return [raidus_arithmetic, radius_geometric]
+
+def distance(a,b):
+    #calculate the distance between two points
+    #both a and b are list of coordinates
+    return ((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2)**0.5 
+
+def edge2edgedis(alist,blist):
+    #calculate shortest distance between two lists of coordinates a and b
+    pairs = [(a,b) for a in alist for b in blist]
+    return np.argmin([distance(a,b) for (a,b) in pairs])
 
 
