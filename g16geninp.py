@@ -211,6 +211,44 @@ def addh_heme(lines):
 
     return newlines
 
+def addh_protein(lines):
+    #default O-H bond length value
+    O_H_bond= 0.98
+    newlines = []
+    for i in range(len(lines)):
+        line = lines[i]
+        #parse one line
+        if line[12:16].strip() == 'OE2' and line[17:21].strip() == 'GLU':
+            element = line[76:78].strip()
+            x = float(line[30:38].strip())
+            y = float(line[38:46].strip())
+            z = float(line[46:54].strip())
+            #get coord of CD
+            refline = lines[i-2]
+            x_ref = float(refline[30:38].strip())
+            y_ref = float(refline[38:46].strip())
+            z_ref = float(refline[46:54].strip())
+            #calculate the new coord for H
+            CO_length = ((x-x_ref)**2+(y-y_ref)**2+(z-z_ref)**2)**0.5
+            newx = x + (x - x_ref)*O_H_bond/CO_length
+            newy = y + (y - y_ref)*O_H_bond/CO_length
+            newz = z + (z - z_ref)*O_H_bond/CO_length
+            #write two line 
+            addline = line
+            linelist = list(addline)
+            #revise atom type and atom name
+            #fake atom type of HE, SHOULD be okey with calculation
+            linelist[12:16] = ' HE'
+            linelist[30:54] = '{:>8.3f}{:>8.3f}{:>8.3f}'.format(newx,newy,newz)
+            linelist[76:78] = ' H'
+            newline = ''.join(linelist)
+            newlines.append(line)
+            newlines.append(newline)
+        else:
+            newlines.append(line)
+
+    return newlines
+
 def replace_zinc(lines):
     #default N-H bond length value
     N_H_bond = 1.00
@@ -356,6 +394,7 @@ def cap_sidechain_more(lines):
 #find specific feature in -s argument
 if 'addh' in specific_feature:
     lines = addh_heme(lines)
+    lines = addh_protein(lines)
 if 'repzn' in specific_feature:
     lines = replace_zinc(lines)
 if 'cap_back' in specific_feature:
